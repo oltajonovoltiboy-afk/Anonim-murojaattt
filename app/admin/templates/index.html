@@ -1,0 +1,1823 @@
+<!DOCTYPE html>
+<html lang="uz" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Urganch davlat akademik litseyi — Murojaatlar boshqaruv tizimi</title>
+  <link rel="icon" type="image/png" href="/static/favicon.png">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            nordic: {
+              bg: '#141c2b',
+              header: '#182235',
+              card: '#1e293b',
+              surface: '#26344d',
+              border: '#2c3b54',
+              accent: '#38bdf8',
+              paper: '#f1f4f9',
+            },
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+    [v-cloak] { display: none; }
+    
+    /* Zamonaviy scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    .dark ::-webkit-scrollbar-thumb { background: #2c3b54; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    .dark ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
+  </style>
+</head>
+<body class="h-full antialiased bg-[#f1f4f9] text-slate-800 dark:bg-[#141c2b] dark:text-[#f1f5f9]">
+
+<div id="app" v-cloak class="h-full flex flex-col">
+
+  <!-- =============================================================== -->
+  <!-- 1. LOGIN EKRANI (Tizimga kirmagan bo'lsa)                       -->
+  <!-- =============================================================== -->
+  <div v-if="!currentStaff" class="min-h-full relative flex flex-col items-center justify-center p-4 bg-[#0a0f1d] text-slate-100 overflow-hidden select-none">
+
+    <!-- Orqa fon ambient nurlari (Glow effect) -->
+    <div class="absolute -top-36 -left-36 w-96 h-96 bg-emerald-500/15 rounded-full blur-[110px] pointer-events-none"></div>
+    <div class="absolute -bottom-36 -right-36 w-96 h-96 bg-blue-600/15 rounded-full blur-[110px] pointer-events-none"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-brand-500/5 rounded-full blur-[130px] pointer-events-none"></div>
+
+    <!-- Nozik zamonaviy to‘r (High-tech grid pattern) -->
+    <div class="absolute inset-0 bg-[linear-gradient(to_right,#1e293b25_1px,transparent_1px),linear-gradient(to_bottom,#1e293b25_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] pointer-events-none"></div>
+
+    <!-- Asosiy Login Kartasi (Glassmorphism & Depth) -->
+    <div class="relative z-10 w-full max-w-[390px] bg-[#141d2e]/90 backdrop-blur-2xl rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.6)] border border-slate-700/60 ring-1 ring-white/10 p-7 sm:p-8">
+
+      <!-- Sokin logo va sarlavha -->
+      <div class="text-center mb-6">
+        <div class="inline-flex relative mb-3 group">
+          <div class="absolute inset-0 rounded-full bg-emerald-500/25 blur-lg group-hover:bg-emerald-500/40 transition duration-300"></div>
+          <img src="/static/logo.png" alt="UrDU AL"
+               class="w-16 h-16 rounded-full relative shadow-xl ring-2 ring-emerald-500/40 p-1 bg-[#0e1626] object-contain">
+        </div>
+        <h1 class="text-lg font-bold text-white tracking-tight">UrDU Akademik litseyi</h1>
+        <p class="text-xs text-slate-400 mt-1">Murojaatlar boshqaruv portali</p>
+      </div>
+
+      <!-- Xatolik xabari -->
+      <div v-if="authError" class="mb-4 p-3 bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs rounded-xl flex items-center gap-2.5">
+        <svg class="w-4 h-4 flex-shrink-0 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        <span>{{ authError }}</span>
+      </div>
+
+      <!-- ASOSIY USUL: LOGIN VA PAROL -->
+      <form v-if="!showOtp" @submit.prevent="loginWithPassword" class="space-y-3.5">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1.5">Login yoki Telegram ID</label>
+          <input v-model.trim="pwForm.login" type="text" required placeholder="Masalan: anvar_sn"
+                 class="w-full px-3.5 py-2.5 bg-[#0e1626] border border-slate-700/80 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-xs transition">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1.5">Maxfiy parol</label>
+          <div class="relative">
+            <input v-model="pwForm.password" :type="showPw ? 'text' : 'password'" required placeholder="••••••••"
+                   class="w-full px-3.5 py-2.5 bg-[#0e1626] border border-slate-700/80 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-xs transition pr-10">
+            <button type="button" @click="showPw = !showPw" class="absolute right-3 top-2.5 text-slate-400 hover:text-white transition">
+              <svg v-if="!showPw" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+              <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"/></svg>
+            </button>
+          </div>
+        </div>
+        <button type="submit" :disabled="authLoading"
+                class="w-full py-2.5 px-4 bg-brand-600 hover:bg-brand-500 text-white font-medium rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-lg shadow-brand-600/30 disabled:opacity-50 mt-1">
+          <span v-if="!authLoading">Tizimga kirish</span>
+          <span v-else>Tekshirilmoqda...</span>
+        </button>
+      </form>
+
+      <!-- ZAXIRA USUL: BIR MARTALIK TELEGRAM KOD -->
+      <div v-else class="space-y-4">
+        <div v-if="loginStep === 1">
+          <form @submit.prevent="requestCode" class="space-y-4">
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1.5">Telegram ID raqamingiz</label>
+              <input v-model.trim="loginForm.telegram_id" type="number" required placeholder="Masalan: 6150570776"
+                     class="w-full px-3.5 py-2.5 bg-[#0e1626] border border-slate-700/80 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-xs transition">
+            </div>
+            <button type="submit" :disabled="authLoading"
+                    class="w-full py-2.5 px-4 bg-brand-600 hover:bg-brand-500 text-white font-medium rounded-xl text-xs transition disabled:opacity-50">
+              <span v-if="!authLoading">Kodni yuborish</span>
+              <span v-else>Yuborilmoqda...</span>
+            </button>
+          </form>
+        </div>
+        <div v-if="loginStep === 2">
+          <form @submit.prevent="verifyCode" class="space-y-4">
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1.5">Kodni kiriting</label>
+              <input v-model.trim="loginForm.code" type="text" maxlength="6" required placeholder="000000"
+                     class="w-full px-3.5 py-2.5 bg-[#0e1626] border border-slate-700/80 rounded-xl text-center text-xl font-mono tracking-widest text-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-500 text-xs transition">
+            </div>
+            <button type="submit" :disabled="authLoading || loginForm.code.length < 6"
+                    class="w-full py-2.5 px-4 bg-brand-600 hover:bg-brand-500 text-white font-medium rounded-xl text-xs transition disabled:opacity-50">
+              <span v-if="!authLoading">Kirish</span>
+              <span v-else>Tekshirilmoqda...</span>
+            </button>
+            <button type="button" @click="loginStep = 1; authError = ''"
+                    class="w-full py-1 text-xs text-slate-400 hover:text-white transition">
+              ← Orqaga
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- AJRATUVCHI CHIZIQ -->
+      <div class="relative my-4">
+        <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-700/60"></div></div>
+        <div class="relative flex justify-center text-xs"><span class="bg-[#141d2e] px-2 text-slate-400">yoki</span></div>
+      </div>
+
+      <!-- TELEGRAM ORQALI 1-KLIKDA KIRISH TUGMASI -->
+      <a href="https://t.me/litseymurojaatbot?start=login" target="_blank"
+         class="w-full py-2.5 px-4 bg-[#229ED9]/15 hover:bg-[#229ED9]/25 text-[#38bdf8] border border-[#229ED9]/30 font-medium rounded-xl text-xs transition flex items-center justify-center gap-2 group shadow-sm">
+        <svg class="w-4 h-4 fill-current transition group-hover:scale-110" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .37z"/></svg>
+        <span>Telegram orqali 1-klikda kirish</span>
+      </a>
+
+      <!-- Pastdagi sokin yordamchi havola -->
+      <div class="mt-4 text-center">
+        <button type="button" @click="showOtp = !showOtp; authError = ''"
+                class="text-[11px] text-slate-400 hover:text-white transition">
+          {{ showOtp ? '← Login & Parol orqali kirish' : 'Parolsiz kod orqali kirish' }}
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Pastki sokin mualliflik satri -->
+    <div class="relative z-10 mt-6 text-center text-[11px] text-slate-500 tracking-wide">
+      Abu Rayhon Beruniy nomidagi Urganch davlat akademik litseyi
+    </div>
+
+  </div>
+
+  <!-- =============================================================== -->
+  <!-- 2. ASOSIY ILOVA (Tizimga kirgan xodim uchun)                    -->
+  <!-- =============================================================== -->
+  <div v-else class="h-full flex flex-row overflow-hidden">
+
+    <!-- SIDEBAR -->
+    <aside class="w-64 bg-[#182235] text-slate-300 flex-shrink-0 flex flex-col border-r border-slate-200/20 dark:border-[#2c3b54] select-none">
+      <!-- Litsey Brand Badge with Official Seal -->
+      <div class="p-4 border-b border-[#2c3b54]/80 flex items-center gap-3">
+        <div class="relative flex-shrink-0">
+          <img src="/static/logo.png" alt="UrDU Akademik Litseyi" class="w-10 h-10 rounded-full object-contain ring-2 ring-emerald-500/40 shadow-lg bg-[#141c2b]/50 p-0.5">
+        </div>
+        <div class="overflow-hidden">
+          <h2 class="text-xs font-bold text-white uppercase tracking-wider truncate">UrDU Akademik Litseyi</h2>
+          <p class="text-[11px] text-slate-400 truncate">Murojaatlar portali</p>
+        </div>
+      </div>
+
+      <!-- Navigatsiya menyusi -->
+      <nav class="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto">
+        <button @click="setTab('dashboard')"
+                :class="tab === 'dashboard' ? 'bg-brand-600 text-white shadow-md shadow-brand-600/25 font-semibold' : 'hover:bg-[#26344d]/70 text-slate-300 hover:text-white'"
+                class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs transition duration-150">
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+          <span>Dashboard</span>
+        </button>
+
+        <button @click="setTab('appeals')"
+                :class="tab === 'appeals' ? 'bg-brand-600 text-white shadow-md shadow-brand-600/25 font-semibold' : 'hover:bg-[#26344d]/70 text-slate-300 hover:text-white'"
+                class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs transition duration-150">
+          <div class="flex items-center gap-3">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <span>Murojaatlar</span>
+          </div>
+          <span v-if="stats && stats.new > 0" class="px-2 py-0.5 text-[10px] font-bold bg-amber-400 text-slate-950 rounded-full shadow animate-pulse">
+            {{ stats.new }}
+          </span>
+        </button>
+
+        <button v-if="currentStaff.is_admin" @click="setTab('staff')"
+                :class="tab === 'staff' ? 'bg-brand-600 text-white shadow-md shadow-brand-600/25 font-semibold' : 'hover:bg-[#26344d]/70 text-slate-300 hover:text-white'"
+                class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs transition duration-150">
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+          <span>Xodimlar va mas'ullar</span>
+        </button>
+
+        <button v-if="currentStaff.is_admin" @click="setTab('users')"
+                :class="tab === 'users' ? 'bg-brand-600 text-white shadow-md shadow-brand-600/25 font-semibold' : 'hover:bg-[#26344d]/70 text-slate-300 hover:text-white'"
+                class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs transition duration-150">
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          <span>Bot foydalanuvchilari</span>
+        </button>
+
+        <button v-if="currentStaff.is_admin" @click="setTab('reports')"
+                :class="tab === 'reports' ? 'bg-brand-600 text-white shadow-md shadow-brand-600/25 font-semibold' : 'hover:bg-[#26344d]/70 text-slate-300 hover:text-white'"
+                class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs transition duration-150">
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span>Hisobotlar (XLSX / PDF)</span>
+        </button>
+
+        <button v-if="currentStaff.is_super_admin" @click="setTab('settings')"
+                :class="tab === 'settings' ? 'bg-brand-600 text-white shadow-md shadow-brand-600/25 font-semibold' : 'hover:bg-[#26344d]/70 text-slate-300 hover:text-white'"
+                class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs transition duration-150">
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <span>Tizim sozlamalari</span>
+        </button>
+
+        <button v-if="currentStaff.is_admin" @click="setTab('audit')"
+                :class="tab === 'audit' ? 'bg-brand-600 text-white shadow-md shadow-brand-600/25 font-semibold' : 'hover:bg-[#26344d]/70 text-slate-300 hover:text-white'"
+                class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs transition duration-150">
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+          <span>Audit jurnali</span>
+        </button>
+      </nav>
+
+      <!-- Profil & Chiqish -->
+      <div class="p-3 border-t border-[#2c3b54]/80 bg-[#141c2b]/60">
+        <div class="flex items-center justify-between p-2 rounded-xl bg-[#1e293b]/70 border border-[#2c3b54]">
+          <div class="overflow-hidden pr-2 cursor-pointer" @click="openProfileModal" title="Profil va parolni sozlash">
+            <div class="text-xs font-semibold text-white truncate flex items-center gap-1">
+              <span>{{ currentStaff.full_name }}</span>
+              <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+            </div>
+            <div class="text-[10px] text-brand-400 font-mono uppercase tracking-wider truncate">
+              {{ currentStaff.username ? '@' + currentStaff.username : currentStaff.role }}
+            </div>
+          </div>
+          <div class="flex items-center gap-1">
+            <button @click="openProfileModal" title="Profil va parolni sozlash" class="p-1.5 text-slate-400 hover:text-white hover:bg-[#26344d] rounded-lg transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </button>
+            <button @click="logout" title="Chiqish" class="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-[#26344d] rounded-lg transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ASOSIY KONTENT SOHASI -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden">
+      <!-- HEADER -->
+      <header class="h-14 bg-white dark:bg-[#182235] border-b border-slate-200 dark:border-[#2c3b54] px-6 flex items-center justify-between flex-shrink-0 transition-colors">
+        <div class="flex items-center gap-3">
+          <img src="/static/logo.png" alt="UrDU AL" class="w-8 h-8 rounded-full object-contain ring-2 ring-emerald-500/30 shadow-sm p-0.5 bg-[#141c2b]/10 dark:bg-white/5">
+          <div>
+            <h1 class="text-sm font-bold text-slate-900 dark:text-white capitalize leading-tight">{{ tabTitles[tab] || tab }}</h1>
+            <p class="text-[10px] text-slate-400 hidden sm:block">Urganch davlat universiteti akademik litseyi</p>
+          </div>
+          <span v-if="tab === 'appeals' && totalAppeals" class="ml-2 px-2 py-0.5 bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20 rounded-full text-xs font-mono font-semibold">
+            {{ totalAppeals }} ta
+          </span>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <!-- Dark / Light Mode Switcher -->
+          <button @click="toggleTheme"
+                  class="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-[#2c3b54] bg-slate-50 dark:bg-[#26344d] text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition flex items-center gap-2 text-xs font-medium"
+                  :title="isDark ? 'Kunduzgi rejimga o‘tish' : 'Tungi rejimga o‘tish'">
+            <span v-if="isDark" class="flex items-center gap-1.5 text-amber-300">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+              <span>Kunduzgi</span>
+            </span>
+            <span v-else class="flex items-center gap-1.5 text-slate-700">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+              <span>Tungi</span>
+            </span>
+          </button>
+
+          <!-- Yangilash tugmasi -->
+          <button @click="refreshCurrentTab" class="p-2 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#26344d] rounded-xl transition text-xs flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            <span>Yangilash</span>
+          </button>
+
+          <!-- Telegram Bot Havolasi -->
+          <a href="https://t.me/litseymurojaatbot" target="_blank" class="px-3 py-1.5 bg-brand-500/10 hover:bg-brand-500/20 text-brand-600 dark:text-brand-400 border border-brand-500/20 rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
+            <span>@litseymurojaatbot</span>
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          </a>
+        </div>
+      </header>
+
+      <!-- TAB KONTENTI (Scrollable) -->
+      <div class="flex-1 overflow-y-auto p-6">
+
+        <!-- ========================================================= -->
+        <!-- TAB: DASHBOARD                                            -->
+        <!-- ========================================================= -->
+        <div v-if="tab === 'dashboard'" class="space-y-6">
+          <!-- Davr filtri -->
+          <div class="flex items-center justify-between">
+            <div class="inline-flex p-1 bg-slate-200/80 dark:bg-[#182235] border border-slate-300 dark:border-[#2c3b54] rounded-xl text-xs font-medium">
+              <button @click="changePeriod('day')" :class="dashPeriod === 'day' ? 'bg-white dark:bg-brand-600 text-slate-900 dark:text-white shadow' : 'text-slate-600 dark:text-slate-400 hover:text-white'" class="px-3.5 py-1.5 rounded-lg transition">Kunlik</button>
+              <button @click="changePeriod('week')" :class="dashPeriod === 'week' ? 'bg-white dark:bg-brand-600 text-slate-900 dark:text-white shadow' : 'text-slate-600 dark:text-slate-400 hover:text-white'" class="px-3.5 py-1.5 rounded-lg transition">Haftalik</button>
+              <button @click="changePeriod('month')" :class="dashPeriod === 'month' ? 'bg-white dark:bg-brand-600 text-slate-900 dark:text-white shadow' : 'text-slate-600 dark:text-slate-400 hover:text-white'" class="px-3.5 py-1.5 rounded-lg transition">Oylik</button>
+            </div>
+            <div class="text-xs text-slate-500 dark:text-slate-400">
+              Bugun kelib tushgan: <span class="font-bold text-slate-900 dark:text-white">{{ stats?.created_today || 0 }}</span> ta
+            </div>
+          </div>
+
+          <!-- KPI Kartochkalari -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+            <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl border border-slate-200 dark:border-[#2c3b54] shadow-sm transition">
+              <div class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Jami murojaatlar</div>
+              <div class="text-2xl font-bold text-slate-900 dark:text-white mt-2">{{ stats?.total || 0 }}</div>
+              <div class="text-[11px] text-slate-400 mt-1">Shu oyda: {{ stats?.created_this_month || 0 }} ta</div>
+            </div>
+
+            <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl border border-amber-200 dark:border-amber-500/30 bg-amber-50/30 dark:bg-amber-500/5 shadow-sm transition">
+              <div class="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                <span>Yangi arizalar</span>
+              </div>
+              <div class="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-2">{{ stats?.new || 0 }}</div>
+              <div class="text-[11px] text-slate-400 mt-1">Ko‘rib chiqilishi kerak</div>
+            </div>
+
+            <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl border border-sky-200 dark:border-sky-500/30 bg-sky-50/30 dark:bg-sky-500/5 shadow-sm transition">
+              <div class="text-xs font-semibold text-sky-700 dark:text-sky-400 uppercase tracking-wider">Jarayonda</div>
+              <div class="text-2xl font-bold text-sky-600 dark:text-sky-400 mt-2">{{ stats?.in_review || 0 }}</div>
+              <div class="text-[11px] text-slate-400 mt-1">O‘rganilmoqda</div>
+            </div>
+
+            <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/30 dark:bg-emerald-500/5 shadow-sm transition">
+              <div class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Hal qilindi</div>
+              <div class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-2">{{ stats?.resolved || 0 }}</div>
+              <div class="text-[11px] text-slate-400 mt-1">Ijobiy natija</div>
+            </div>
+
+            <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl border border-rose-200 dark:border-rose-500/30 bg-rose-50/30 dark:bg-rose-500/5 shadow-sm transition">
+              <div class="text-xs font-semibold text-rose-700 dark:text-rose-400 uppercase tracking-wider">Rad etildi</div>
+              <div class="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-2">{{ stats?.rejected || 0 }}</div>
+              <div class="text-[11px] text-slate-400 mt-1">Asossiz / rad</div>
+            </div>
+
+            <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl border border-amber-300 dark:border-amber-500/40 bg-amber-50/40 dark:bg-amber-500/10 shadow-sm transition">
+              <div class="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
+                <span>⭐ Qanoatlanish</span>
+              </div>
+              <div class="text-2xl font-bold text-amber-500 dark:text-amber-400 mt-2">
+                {{ stats?.avg_rating ? `${stats.avg_rating} / 5.0` : '5.0 / 5' }}
+              </div>
+              <div class="text-[11px] text-slate-400 mt-1">Baholangan: {{ stats?.rating_count || 0 }} ta</div>
+            </div>
+          </div>
+
+          <!-- Grafiklar: Dinamika va Yo'nalishlar -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 bg-white dark:bg-[#1e293b] p-5 rounded-2xl border border-slate-200 dark:border-[#2c3b54] shadow-sm">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Murojaatlar dinamikasi</h3>
+                <span class="text-[11px] text-slate-400">Yangi va hal etilgan</span>
+              </div>
+              <div class="h-64 relative">
+                <canvas id="timelineChart"></canvas>
+              </div>
+            </div>
+
+            <div class="bg-white dark:bg-[#1e293b] p-5 rounded-2xl border border-slate-200 dark:border-[#2c3b54] shadow-sm">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Yo‘nalishlar taqsimoti</h3>
+              </div>
+              <div class="h-64 relative flex items-center justify-center">
+                <canvas id="categoriesChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- TAB: APPEALS (Barcha Murojaatlar)                         -->
+        <!-- ========================================================= -->
+        <div v-if="tab === 'appeals'" class="space-y-4">
+          <!-- Qidiruv va Filtrlar -->
+          <div class="bg-white dark:bg-[#1e293b] p-4 rounded-2xl border border-slate-200 dark:border-[#2c3b54] shadow-sm flex flex-wrap items-center gap-3">
+            <div class="flex-1 min-w-[200px]">
+              <div class="relative">
+                <input v-model.trim="appealFilters.q" @keyup.enter="loadAppeals(1)" type="text"
+                       placeholder="F.I.Sh., telefon, raqam yoki matn bo‘yicha qidirish..."
+                       class="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-[#182235] border border-slate-200 dark:border-[#2c3b54] rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                <svg class="w-4 h-4 absolute left-3 top-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              </div>
+            </div>
+
+            <select v-model="appealFilters.status" @change="loadAppeals(1)"
+                    class="px-3 py-2 bg-slate-50 dark:bg-[#182235] border border-slate-200 dark:border-[#2c3b54] rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+              <option value="">Barcha holatlar</option>
+              <option value="NEW">🆕 Yangi</option>
+              <option value="ACCEPTED">📥 Qabul qilingan</option>
+              <option value="IN_REVIEW">🔄 Ko‘rib chiqilmoqda</option>
+              <option value="INFO_REQUESTED">❓ Ma'lumot so‘ralgan</option>
+              <option value="RESOLVED">✅ Hal qilingan</option>
+              <option value="REJECTED">⛔ Rad etilgan</option>
+            </select>
+
+            <select v-model="appealFilters.category" @change="loadAppeals(1)"
+                    class="px-3 py-2 bg-slate-50 dark:bg-[#182235] border border-slate-200 dark:border-[#2c3b54] rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+              <option value="">Barcha yo‘nalishlar</option>
+              <option value="EDUCATION_QUALITY">📚 Ta'lim sifati</option>
+              <option value="TEACHERS">👨‍🏫 O‘qituvchilar faoliyati</option>
+              <option value="STUDENTS">🎒 O‘quvchilar masalalari</option>
+              <option value="INFRASTRUCTURE">🏢 Sharoit va infratuzilma</option>
+              <option value="SUGGESTION">💡 Taklif</option>
+              <option value="COMPLAINT">⚠️ Shikoyat</option>
+              <option value="OTHER">📌 Boshqa masalalar</option>
+            </select>
+
+            <button @click="loadAppeals(1)" class="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-semibold transition">
+              Filtrlash
+            </button>
+            <button @click="resetAppealFilters" class="px-3 py-2 text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white transition">
+              Tozalash
+            </button>
+          </div>
+
+          <!-- Murojaatlar Jadvali -->
+          <div class="bg-white dark:bg-[#1e293b] rounded-2xl border border-slate-200 dark:border-[#2c3b54] shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 dark:bg-[#182235] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider border-b border-slate-200 dark:border-[#2c3b54]">
+                  <tr>
+                    <th class="px-5 py-3.5">Raqam</th>
+                    <th class="px-4 py-3.5">Fuqaro</th>
+                    <th class="px-4 py-3.5">Mavzu</th>
+                    <th class="px-4 py-3.5">Holat</th>
+                    <th class="px-4 py-3.5">Mas'ul</th>
+                    <th class="px-4 py-3.5">Sana</th>
+                    <th class="px-4 py-3.5 text-right">Amal</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-[#2c3b54]/60">
+                  <tr v-for="a in appealsList" :key="a.id" class="hover:bg-slate-50 dark:hover:bg-[#26344d]/40 transition">
+                    <td class="px-5 py-3 font-mono font-bold text-brand-600 dark:text-brand-400">{{ a.number }}</td>
+                    <td class="px-4 py-3">
+                      <div class="font-semibold text-slate-900 dark:text-white">{{ a.full_name }}</div>
+                      <div class="text-[11px] text-slate-500 dark:text-slate-400 font-mono">{{ a.phone }}</div>
+                    </td>
+                    <td class="px-4 py-3 max-w-xs">
+                      <div class="truncate font-medium text-slate-800 dark:text-slate-200">{{ a.subject }}</div>
+                      <div class="text-[10px] text-slate-400 uppercase tracking-wider">{{ a.category_label || a.category }}</div>
+                    </td>
+                    <td class="px-4 py-3">
+                      <div class="flex items-center gap-1.5">
+                        <span :class="statusBadgeClass(a.status)" class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1">
+                          {{ a.status_label || a.status }}
+                        </span>
+                        <span v-if="a.rating" class="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300" :title="'Baholandi: ' + a.rating + '/5'">
+                          ⭐ {{ a.rating }}
+                        </span>
+                      </div>
+                    </td>
+                    <td class="px-4 py-3 text-slate-600 dark:text-slate-300">
+                      {{ a.assigned_staff ? a.assigned_staff.full_name : '—' }}
+                    </td>
+                    <td class="px-4 py-3 text-slate-500 dark:text-slate-400 font-mono text-[11px] whitespace-nowrap">
+                      {{ a.created_at_fmt || a.created_at }}
+                    </td>
+                    <td class="px-4 py-3 text-right">
+                      <button @click="openAppealModal(a.id)" class="px-3 py-1.5 bg-slate-100 dark:bg-[#26344d] hover:bg-brand-600 hover:text-white dark:hover:bg-brand-600 text-slate-700 dark:text-slate-200 rounded-lg font-medium transition">
+                        Ko‘rish
+                      </button>
+                    </td>
+                  </tr>
+                  <tr v-if="appealsList.length === 0">
+                    <td colspan="7" class="px-5 py-8 text-center text-slate-400">
+                      Murojaatlar topilmadi
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="px-5 py-3 border-t border-slate-200 dark:border-[#2c3b54] flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+              <div>Sahifa {{ appealPage }} / {{ totalAppealPages }}</div>
+              <div class="flex items-center gap-2">
+                <button :disabled="appealPage <= 1" @click="loadAppeals(appealPage - 1)"
+                        class="px-3 py-1 rounded-lg border border-slate-200 dark:border-[#2c3b54] disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-[#26344d] transition">
+                  Oldingi
+                </button>
+                <button :disabled="appealPage >= totalAppealPages" @click="loadAppeals(appealPage + 1)"
+                        class="px-3 py-1 rounded-lg border border-slate-200 dark:border-[#2c3b54] disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-[#26344d] transition">
+                  Keyingi
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- TAB: XODIMLAR (Staff Management)                          -->
+        <!-- ========================================================= -->
+        <div v-if="tab === 'staff'" class="space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Xodimlar ro‘yxati</h2>
+            <button @click="openAddStaffModal" class="px-3.5 py-1.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-medium flex items-center gap-1.5 transition shadow-sm">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              <span>Xodim qo‘shish</span>
+            </button>
+          </div>
+
+          <div class="bg-white dark:bg-[#1e293b] rounded-2xl border border-slate-200 dark:border-[#2c3b54] shadow-sm overflow-hidden">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 dark:bg-[#182235] text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-[#2c3b54]">
+                <tr>
+                  <th class="px-4 py-3">F.I.Sh.</th>
+                  <th class="px-3 py-3">Telegram ID</th>
+                  <th class="px-3 py-3">Lavozim / Tel</th>
+                  <th class="px-3 py-3">Roli</th>
+                  <th class="px-3 py-3">Yo‘nalish</th>
+                  <th class="px-3 py-3">Yuklama</th>
+                  <th class="px-3 py-3">Holat</th>
+                  <th class="px-4 py-3 text-right">Amal</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-[#2c3b54]/60">
+                <tr v-for="s in staffList" :key="s.id" class="hover:bg-slate-50 dark:hover:bg-[#26344d]/40 transition">
+                  <td class="px-4 py-3">
+                    <div class="font-medium text-slate-900 dark:text-white">{{ s.full_name }}</div>
+                    <div v-if="s.username" class="text-[11px] text-brand-600 dark:text-brand-400 font-mono">@{{ s.username }}</div>
+                  </td>
+                  <td class="px-3 py-3 font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                    {{ s.telegram_id }}
+                  </td>
+                  <td class="px-3 py-3">
+                    <div class="text-slate-700 dark:text-slate-300">{{ s.position || '—' }}</div>
+                    <div class="text-[10px] text-slate-400">{{ s.phone || '—' }}</div>
+                  </td>
+                  <td class="px-3 py-3">
+                    <span v-if="s.role === 'SUPER_ADMIN'" class="px-2 py-0.5 rounded-md text-[10px] font-medium bg-amber-500/10 text-amber-500 dark:text-amber-400 border border-amber-500/20">
+                      Bosh admin
+                    </span>
+                    <span v-else-if="s.role === 'ADMIN'" class="px-2 py-0.5 rounded-md text-[10px] font-medium bg-sky-500/10 text-sky-500 dark:text-sky-400 border border-sky-500/20">
+                      Admin
+                    </span>
+                    <span v-else class="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20">
+                      Xodim
+                    </span>
+                  </td>
+                  <td class="px-3 py-3">
+                    <select v-model="s.assigned_category" @change="quickUpdateStaffCategory(s)"
+                            class="px-2 py-1 bg-slate-50 dark:bg-[#182235] border border-slate-200 dark:border-[#2c3b54] rounded-lg text-xs text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-brand-500 focus:outline-none">
+                      <option :value="null">Barcha sohalar</option>
+                      <option value="EDUCATION_QUALITY">Ta'lim sifati</option>
+                      <option value="TEACHERS">O‘qituvchilar</option>
+                      <option value="STUDENTS">O‘quvchilar</option>
+                      <option value="INFRASTRUCTURE">Infratuzilma</option>
+                      <option value="SUGGESTION">Takliflar</option>
+                      <option value="COMPLAINT">Shikoyatlar</option>
+                      <option value="OTHER">Boshqa</option>
+                    </select>
+                  </td>
+                  <td class="px-4 py-3 text-xs whitespace-nowrap">
+                    <span class="font-bold text-slate-900 dark:text-white">{{ s.assigned_open || 0 }}</span>
+                    <span class="text-slate-400"> ochiq</span> / {{ s.assigned_total || 0 }} jami
+                  </td>
+                  <td class="px-4 py-3">
+                    <button @click="toggleStaffActive(s)"
+                            :class="s.is_active ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-400 border-emerald-300/30' : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300 border-slate-300/30'"
+                            class="px-2.5 py-1 rounded-full text-[10px] font-bold border transition cursor-pointer"
+                            :title="s.is_active ? 'Faoliyatini to‘xtatish uchun bosing' : 'Faollashtirish uchun bosing'">
+                      {{ s.is_active ? '● Faol' : '○ Nofaol' }}
+                    </button>
+                  </td>
+                  <td class="px-4 py-3 text-right">
+                    <div class="flex items-center justify-end gap-1.5">
+                      <button @click="openEditStaffModal(s)"
+                              class="px-2.5 py-1 bg-slate-100 dark:bg-[#26344d] hover:bg-brand-600 hover:text-white text-slate-700 dark:text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-1 shadow-sm"
+                              title="Tahrirlash va parolni yangilash">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                        <span>Tahrirlash</span>
+                      </button>
+                      <button v-if="!currentStaff || s.id !== currentStaff.id" @click="confirmDeleteStaff(s)"
+                              class="px-2.5 py-1 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-600 hover:text-white text-rose-600 dark:text-rose-400 rounded-lg text-xs font-medium transition flex items-center gap-1 border border-rose-200 dark:border-rose-500/20 shadow-sm"
+                              title="Xodimni butunlay o‘chirish">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        <span>O‘chirish</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- TAB: FOYDALANUVCHILAR (Citizens / Users)                  -->
+        <!-- ========================================================= -->
+        <div v-if="tab === 'users'" class="space-y-4">
+          <div class="bg-white dark:bg-[#1e293b] p-4 rounded-2xl border border-slate-200 dark:border-[#2c3b54] shadow-sm flex items-center justify-between">
+            <div class="relative w-80">
+              <input v-model.trim="userSearch" @keyup.enter="loadUsers(1)" type="text"
+                     placeholder="F.I.Sh. yoki telefon bo‘yicha..."
+                     class="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-[#182235] border border-slate-200 dark:border-[#2c3b54] rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+              <svg class="w-4 h-4 absolute left-3 top-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </div>
+            <div class="text-xs text-slate-500 dark:text-slate-400">Jami fuqarolar: <b>{{ totalUsers }}</b> ta</div>
+          </div>
+
+          <div class="bg-white dark:bg-[#1e293b] rounded-2xl border border-slate-200 dark:border-[#2c3b54] shadow-sm overflow-hidden">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 dark:bg-[#182235] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider border-b border-slate-200 dark:border-[#2c3b54]">
+                <tr>
+                  <th class="px-5 py-3.5">F.I.Sh.</th>
+                  <th class="px-4 py-3.5">Telefon</th>
+                  <th class="px-4 py-3.5">Telegram ID</th>
+                  <th class="px-4 py-3.5">Murojaatlar soni</th>
+                  <th class="px-4 py-3.5">Holati</th>
+                  <th class="px-4 py-3.5 text-right">Amal</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-[#2c3b54]/60">
+                <tr v-for="u in usersList" :key="u.id" class="hover:bg-slate-50 dark:hover:bg-[#26344d]/40 transition">
+                  <td class="px-5 py-3 font-semibold text-slate-900 dark:text-white">{{ u.full_name || '—' }}</td>
+                  <td class="px-4 py-3 font-mono text-brand-600 dark:text-brand-400">{{ u.phone || '—' }}</td>
+                  <td class="px-4 py-3 font-mono text-slate-500 dark:text-slate-400">{{ u.telegram_id }}</td>
+                  <td class="px-4 py-3 font-bold">{{ u.appeals_count || 0 }} ta</td>
+                  <td class="px-4 py-3">
+                    <span v-if="!u.is_blocked" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-400">Faol</span>
+                    <span v-else class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-500/20 dark:text-rose-400">Bloklangan</span>
+                  </td>
+                  <td class="px-4 py-3 text-right">
+                    <button @click="toggleBlockUser(u)"
+                            :class="u.is_blocked ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-600 hover:text-white' : 'bg-rose-500/20 text-rose-400 hover:bg-rose-600 hover:text-white'"
+                            class="px-3 py-1 rounded-lg text-xs font-medium transition">
+                      {{ u.is_blocked ? 'Blokdan chiqarish' : 'Bloklash' }}
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- TAB: HISOBOTLAR (Reports Export)                          -->
+        <!-- ========================================================= -->
+        <div v-if="tab === 'reports'" class="max-w-2xl space-y-6">
+          <div class="bg-white dark:bg-[#1e293b] p-6 rounded-2xl border border-slate-200 dark:border-[#2c3b54] shadow-sm space-y-5">
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Hisobotlarni eksport qilish</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              Murojaatlar bazasini tahlil qilish, rahbariyatga rasmiy hisobot topshirish yoki arxivlash uchun Excel (XLSX) va PDF shaklida yuklab oling.
+            </p>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Boshlanish sanasi</label>
+                <input v-model="reportFilters.date_from" type="date" class="w-full px-3 py-2 bg-slate-50 dark:bg-[#182235] border border-slate-200 dark:border-[#2c3b54] rounded-xl text-xs text-slate-900 dark:text-white">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Tugash sanasi</label>
+                <input v-model="reportFilters.date_to" type="date" class="w-full px-3 py-2 bg-slate-50 dark:bg-[#182235] border border-slate-200 dark:border-[#2c3b54] rounded-xl text-xs text-slate-900 dark:text-white">
+              </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-100 dark:border-[#2c3b54] flex gap-3">
+              <a :href="excelReportUrl" download class="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold text-center transition flex items-center justify-center gap-2 shadow-md shadow-emerald-600/20">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <span>Excel hisoboti (.xlsx)</span>
+              </a>
+              <a :href="pdfReportUrl" download class="flex-1 py-3 px-4 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold text-center transition flex items-center justify-center gap-2 shadow-md shadow-rose-600/20">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                <span>PDF hisoboti (.pdf)</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- TAB: SOZLAMALAR (Settings)                                -->
+        <!-- ========================================================= -->
+        <div v-if="tab === 'settings'" class="max-w-3xl space-y-6">
+          <form @submit.prevent="saveSettings" class="bg-white dark:bg-[#1e293b] p-6 rounded-2xl border border-slate-200 dark:border-[#2c3b54] shadow-sm space-y-5">
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Tizim va Bot Sozlamalari</h3>
+
+            <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-[#182235] border border-slate-200 dark:border-[#2c3b54] rounded-xl">
+              <div>
+                <div class="text-xs font-bold text-slate-900 dark:text-white">Murojaatlarni qabul qilish</div>
+                <div class="text-[11px] text-slate-500 dark:text-slate-400">O‘chirilsa fuqarolardan yangi arizalar qabul qilinmaydi</div>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input v-model="settingsForm.accepting_appeals" type="checkbox" class="sr-only peer">
+                <div class="w-11 h-6 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+              </label>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">«Biz haqimizda» bo‘limi matni</label>
+              <textarea v-model="settingsForm.about_text" rows="5"
+                        class="w-full p-3 bg-slate-50 dark:bg-[#182235] border border-slate-200 dark:border-[#2c3b54] rounded-xl text-xs text-slate-900 dark:text-white font-mono focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">«Bog‘lanish» bo‘limi matni</label>
+              <textarea v-model="settingsForm.contact_text" rows="4"
+                        class="w-full p-3 bg-slate-50 dark:bg-[#182235] border border-slate-200 dark:border-[#2c3b54] rounded-xl text-xs text-slate-900 dark:text-white font-mono focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
+            </div>
+
+            <div class="pt-4 border-t border-slate-100 dark:border-[#2c3b54] flex justify-end">
+              <button type="submit" class="px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-bold transition shadow-md shadow-brand-600/20">
+                O‘zgarishlarni saqlash
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- TAB: AUDIT JURNALI (Audit Logs)                           -->
+        <!-- ========================================================= -->
+        <div v-if="tab === 'audit'" class="space-y-4">
+          <div class="bg-white dark:bg-[#1e293b] rounded-2xl border border-slate-200 dark:border-[#2c3b54] shadow-sm overflow-hidden">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 dark:bg-[#182235] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider border-b border-slate-200 dark:border-[#2c3b54]">
+                <tr>
+                  <th class="px-5 py-3.5">Vaqt</th>
+                  <th class="px-4 py-3.5">Harakat</th>
+                  <th class="px-4 py-3.5">Ijrochi</th>
+                  <th class="px-4 py-3.5">Ob'yekt</th>
+                  <th class="px-4 py-3.5">IP manzil</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-[#2c3b54]/60">
+                <tr v-for="log in auditList" :key="log.id" class="hover:bg-slate-50 dark:hover:bg-[#26344d]/40 transition">
+                  <td class="px-5 py-3 font-mono text-[11px] text-slate-500 dark:text-slate-400">{{ log.created_at_fmt || log.created_at }}</td>
+                  <td class="px-4 py-3 font-semibold text-brand-600 dark:text-brand-400">{{ log.action }}</td>
+                  <td class="px-4 py-3 text-slate-800 dark:text-slate-200">
+                    {{ log.staff ? log.staff.full_name : (log.user ? log.user.full_name : 'Tizim') }}
+                  </td>
+                  <td class="px-4 py-3 font-mono text-slate-500 dark:text-slate-400">
+                    {{ log.entity_type ? `${log.entity_type} #${log.entity_id}` : '—' }}
+                  </td>
+                  <td class="px-4 py-3 font-mono text-slate-400 text-[11px]">{{ log.ip_address || '—' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- =============================================================== -->
+    <!-- MODAL: MUROJAAT TAFSILOTLARI VA HARAKATLAR                      -->
+    <!-- =============================================================== -->
+    <div v-if="activeAppeal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-[#1e293b] rounded-2xl shadow-2xl border border-slate-200 dark:border-[#2c3b54] w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden text-slate-800 dark:text-slate-100">
+        <!-- Modal Header -->
+        <div class="px-6 py-4 border-b border-slate-200 dark:border-[#2c3b54] flex items-center justify-between bg-slate-50 dark:bg-[#182235]">
+          <div class="flex items-center gap-3">
+            <span class="font-mono text-base font-bold text-brand-600 dark:text-brand-400">{{ activeAppeal.number }}</span>
+            <span :class="statusBadgeClass(activeAppeal.status)" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
+              {{ activeAppeal.status_label || activeAppeal.status }}
+            </span>
+          </div>
+          <button @click="activeAppeal = null" class="p-1.5 text-slate-400 hover:text-slate-800 dark:hover:text-white rounded-lg hover:bg-slate-200 dark:hover:bg-[#26344d] transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <!-- Modal Body (2 ta ustun) -->
+        <div class="flex-1 overflow-y-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Chap Ustun: Fuqaro ma'lumotlari, Murojaat matni, Fayllar, Yozishmalar -->
+          <div class="lg:col-span-2 space-y-5">
+            <!-- Fuqaro kartochkasi -->
+            <div class="p-4 bg-slate-50 dark:bg-[#182235] rounded-xl border border-slate-200 dark:border-[#2c3b54] grid grid-cols-2 gap-3 text-xs">
+              <div>
+                <span class="text-slate-400 block text-[10px] uppercase font-semibold">Fuqaro</span>
+                <span class="font-bold text-slate-900 dark:text-white">{{ activeAppeal.full_name }}</span>
+              </div>
+              <div>
+                <span class="text-slate-400 block text-[10px] uppercase font-semibold">Telefon</span>
+                <span class="font-mono text-brand-600 dark:text-brand-400 font-semibold">{{ activeAppeal.phone }}</span>
+              </div>
+              <div>
+                <span class="text-slate-400 block text-[10px] uppercase font-semibold">Toifasi</span>
+                <span>{{ activeAppeal.user_type_label || activeAppeal.user_type }}</span>
+              </div>
+              <div>
+                <span class="text-slate-400 block text-[10px] uppercase font-semibold">Yo‘nalish</span>
+                <span>{{ activeAppeal.category_label || activeAppeal.category }}</span>
+              </div>
+              <div v-if="activeAppeal.rating" class="col-span-2 p-3 bg-amber-50/70 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl space-y-1">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                    <span>⭐ Fuqaro tomonidan berilgan baho:</span>
+                  </span>
+                  <span class="font-bold text-amber-600 dark:text-amber-400 text-sm font-mono">
+                    {{ '★'.repeat(activeAppeal.rating) + '☆'.repeat(5 - activeAppeal.rating) }} ({{ activeAppeal.rating }}/5)
+                  </span>
+                </div>
+                <div v-if="activeAppeal.rating_comment" class="text-xs italic text-slate-700 dark:text-slate-300 mt-1 pl-1 border-l-2 border-amber-400">
+                  «{{ activeAppeal.rating_comment }}»
+                </div>
+                <div v-if="activeAppeal.rated_at_fmt" class="text-[10px] text-slate-400 font-mono text-right">
+                  Baholangan vaqti: {{ activeAppeal.rated_at_fmt }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Mavzu va Murojaat matni -->
+            <div>
+              <h4 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Murojaat mazmuni</h4>
+              <div class="p-4 bg-white dark:bg-[#141c2b] border border-slate-200 dark:border-[#2c3b54] rounded-xl">
+                <div class="font-bold text-sm text-slate-900 dark:text-white mb-2">{{ activeAppeal.subject }}</div>
+                <div class="text-xs leading-relaxed whitespace-pre-wrap text-slate-700 dark:text-slate-300">{{ activeAppeal.text }}</div>
+              </div>
+            </div>
+
+            <!-- Biriktirilgan fayllar -->
+            <div v-if="activeAppeal.attachments && activeAppeal.attachments.length > 0">
+              <h4 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Biriktirilgan fayllar ({{ activeAppeal.attachments.length }} ta)</h4>
+              <div class="flex flex-wrap gap-2">
+                <a v-for="att in activeAppeal.attachments" :key="att.id" :href="att.file_url || '#'" target="_blank"
+                   class="px-3 py-2 bg-slate-100 dark:bg-[#182235] hover:bg-brand-500/20 border border-slate-200 dark:border-[#2c3b54] rounded-xl text-xs flex items-center gap-2 transition">
+                  <svg class="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                  <span class="truncate max-w-[150px] font-mono">{{ att.file_name || 'Faylni ko‘rish' }}</span>
+                </a>
+              </div>
+            </div>
+
+            <!-- Xabarlar / Javoblar tarixi -->
+            <div v-if="activeAppeal.messages && activeAppeal.messages.length > 0">
+              <h4 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Yozishmalar tarixi</h4>
+              <div class="space-y-3">
+                <div v-for="msg in activeAppeal.messages" :key="msg.id"
+                     :class="msg.direction === 'STAFF_TO_USER' ? 'bg-brand-50/50 dark:bg-brand-950/20 border-brand-200 dark:border-brand-500/30' : 'bg-slate-50 dark:bg-[#182235] border-slate-200 dark:border-[#2c3b54]'"
+                     class="p-3.5 rounded-xl border text-xs">
+                  <div class="flex items-center justify-between text-[11px] mb-1">
+                    <span class="font-bold text-slate-900 dark:text-white">
+                      {{ msg.direction === 'STAFF_TO_USER' ? '👨‍💼 Mas\'ul xodim' : '👤 Fuqaro' }}
+                    </span>
+                    <span class="text-slate-400 font-mono">{{ msg.created_at_fmt || msg.created_at }}</span>
+                  </div>
+                  <div class="text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{{ msg.text }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- O'ng Ustun: Harakatlar, Status o'zgartirish, Xodimga biriktirish, Javob yozish -->
+          <div class="space-y-5">
+            <!-- 1. Xodimga biriktirish -->
+            <div class="p-4 bg-slate-50 dark:bg-[#182235] rounded-xl border border-slate-200 dark:border-[#2c3b54] space-y-3">
+              <h5 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Ijrochini tayinlash</h5>
+              <select v-model="assignTargetStaffId" class="w-full px-3 py-2 bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-[#2c3b54] rounded-xl text-xs">
+                <option :value="null">Biriktirilmagan</option>
+                <option v-for="st in staffList" :key="st.id" :value="st.id">{{ st.full_name }} ({{ st.role }})</option>
+              </select>
+              <button @click="assignStaff" class="w-full py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-semibold transition">
+                Tayinlash
+              </button>
+            </div>
+
+            <!-- 2. Holatni o'zgartirish -->
+            <form @submit.prevent="submitStatusChange" class="p-4 bg-slate-50 dark:bg-[#182235] rounded-xl border border-slate-200 dark:border-[#2c3b54] space-y-3">
+              <h5 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Holatni yangilash</h5>
+              <select v-model="statusChangeForm.status" class="w-full px-3 py-2 bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-[#2c3b54] rounded-xl text-xs">
+                <option value="ACCEPTED">📥 Qabul qilish</option>
+                <option value="IN_REVIEW">🔄 O‘rganishga olish</option>
+                <option value="INFO_REQUESTED">❓ Qo‘shimcha ma'lumot so‘rash</option>
+                <option value="RESOLVED">✅ Hal qilindi</option>
+                <option value="REJECTED">⛔ Rad etish</option>
+              </select>
+              <textarea v-model.trim="statusChangeForm.comment" rows="2" placeholder="Izoh yoki sabab (fuqaroga yuboriladi)..."
+                        class="w-full p-2.5 bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-[#2c3b54] rounded-xl text-xs"></textarea>
+              <button type="submit" class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold transition">
+                Holatni saqlash
+              </button>
+            </form>
+
+            <!-- 3. Fuqaroga javob yozish (Botga yetkaziladi) -->
+            <form @submit.prevent="submitReply" class="p-4 bg-slate-50 dark:bg-[#182235] rounded-xl border border-slate-200 dark:border-[#2c3b54] space-y-3">
+              <h5 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Fuqaroga javob yuborish</h5>
+              <textarea v-model.trim="replyForm.text" required rows="3" placeholder="Rasmiy javob matnini yozing..."
+                        class="w-full p-2.5 bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-[#2c3b54] rounded-xl text-xs"></textarea>
+              <button type="submit" :disabled="!replyForm.text.trim()" class="w-full py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-semibold transition disabled:opacity-50">
+                Telegramga javob yuborish
+              </button>
+            </form>
+
+            <!-- 4. Tarix (Timeline) -->
+            <div v-if="activeAppeal.history && activeAppeal.history.length > 0">
+              <h5 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Harakatlar xronologiyasi</h5>
+              <div class="space-y-2 max-h-48 overflow-y-auto text-[11px]">
+                <div v-for="h in activeAppeal.history" :key="h.id" class="p-2 rounded-lg bg-white dark:bg-[#182235] border border-slate-200 dark:border-[#2c3b54]">
+                  <div class="font-semibold text-slate-900 dark:text-white">{{ h.new_status }}</div>
+                  <div class="text-[10px] text-slate-400 font-mono">{{ h.created_at_fmt || h.created_at }}</div>
+                  <div v-if="h.comment" class="text-slate-600 dark:text-slate-300 mt-1 italic">{{ h.comment }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =============================================================== -->
+    <!-- MODAL: MENING PROFILIM VA PAROLNI SOZLASH                       -->
+    <!-- =============================================================== -->
+    <div v-if="profileModalOpen" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-[#1e293b] rounded-2xl shadow-2xl border border-slate-200 dark:border-[#2c3b54] w-full max-w-md p-6 space-y-4 text-slate-800 dark:text-slate-100">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#2c3b54]">
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <svg class="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+            <span>Mening profilim va kirish paroli</span>
+          </h3>
+          <button @click="profileModalOpen = false" class="p-1 text-slate-400 hover:text-white">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <div v-if="profileMsg" class="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs rounded-xl flex items-center gap-2">
+          <span>✅ {{ profileMsg }}</span>
+        </div>
+        <div v-if="profileError" class="p-3 bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs rounded-xl flex items-center gap-2">
+          <span>⚠️ {{ profileError }}</span>
+        </div>
+
+        <form @submit.prevent="saveProfile" class="space-y-3.5">
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">F.I.Sh.</label>
+            <input v-model.trim="profileForm.full_name" type="text" required placeholder="Masalan: Anvar Karimov"
+                   class="w-full px-3 py-2 bg-slate-50 dark:bg-[#182235] border border-slate-200 dark:border-[#2c3b54] rounded-xl text-xs text-slate-900 dark:text-white">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Shaxsiy login (Username)</label>
+            <input v-model.trim="profileForm.username" type="text" placeholder="Masalan: anvar_sn"
+                   class="w-full px-3 py-2 bg-slate-50 dark:bg-[#182235] border border-slate-200 dark:border-[#2c3b54] rounded-xl text-xs text-slate-900 dark:text-white font-mono">
+            <p class="text-[10px] text-slate-400 mt-1">Ushbu login orqali parolingiz bilan saytga kirasiz.</p>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Telefon raqam</label>
+            <input v-model.trim="profileForm.phone" type="text" placeholder="+998901234567"
+                   class="w-full px-3 py-2 bg-slate-50 dark:bg-[#182235] border border-slate-200 dark:border-[#2c3b54] rounded-xl text-xs text-slate-900 dark:text-white">
+          </div>
+
+          <div class="pt-2 border-t border-slate-100 dark:border-[#2c3b54]">
+            <label class="block text-xs font-semibold text-amber-600 dark:text-amber-400 mb-1">Yangi maxfiy parol (ixtiyoriy)</label>
+            <input v-model="profileForm.password" type="text" placeholder="O‘zgartirishni xohlasangiz yangi parol yozing"
+                   class="w-full px-3 py-2 bg-slate-50 dark:bg-[#182235] border border-amber-300 dark:border-amber-500/40 rounded-xl text-xs text-slate-900 dark:text-white">
+            <p class="text-[10px] text-slate-400 mt-1">Parolni o‘zgartirishni istamasangiz, bo‘sh qoldiring.</p>
+          </div>
+
+          <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-100 dark:border-[#2c3b54]">
+            <button type="button" @click="profileModalOpen = false" class="px-4 py-2 text-xs text-slate-500 hover:text-white">Bekor qilish</button>
+            <button type="submit" class="px-5 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-semibold transition shadow-md shadow-brand-600/20">
+              Saqlash
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <!-- =============================================================== -->
+    <div v-if="staffModalOpen" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-[#1e293b] rounded-2xl shadow-2xl border border-slate-200 dark:border-[#2c3b54] w-full max-w-md p-6 space-y-4 text-slate-800 dark:text-slate-100">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#2c3b54]">
+          <h3 class="text-sm font-semibold text-slate-900 dark:text-white">
+            {{ editingStaffId ? 'Xodimni tahrirlash' : 'Yangi xodim qo‘shish' }}
+          </h3>
+          <button @click="staffModalOpen = false" class="p-1 text-slate-400 hover:text-white">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <form @submit.prevent="saveStaffMember" class="space-y-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Telegram ID *</label>
+            <input v-model.trim="staffForm.telegram_id" type="number" required placeholder="Masalan: 6150570776"
+                   class="w-full px-3 py-2 bg-slate-50 dark:bg-[#182235] border border-slate-200 dark:border-[#2c3b54] rounded-xl text-xs text-slate-900 dark:text-white">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Login</label>
+              <input v-model.trim="staffForm.username" type="text" placeholder="anvar_sn"
+                     class="w-full px-3 py-2 bg-slate-50 dark:bg-[#182235] border border-slate-200 dark:border-[#2c3b54] rounded-xl text-xs text-slate-900 dark:text-white font-mono">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Parol</label>
+              <input v-model="staffForm.password" type="text" :placeholder="editingStaffId ? 'O‘zgarmasa bo‘sh' : 'Yangi parol'"
+                     class="w-full px-3 py-2 bg-slate-50 dark:bg-[#182235] border border-slate-200 dark:border-[#2c3b54] rounded-xl text-xs text-slate-900 dark:text-white">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">F.I.Sh. *</label>
+            <input v-model.trim="staffForm.full_name" type="text" required placeholder="To‘liq ism"
+                   class="w-full px-3 py-2 bg-slate-50 dark:bg-[#182235] border border-slate-200 dark:border-[#2c3b54] rounded-xl text-xs text-slate-900 dark:text-white">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Lavozim</label>
+              <input v-model.trim="staffForm.position" type="text" placeholder="Lavozimi"
+                     class="w-full px-3 py-2 bg-slate-50 dark:bg-[#182235] border border-slate-200 dark:border-[#2c3b54] rounded-xl text-xs text-slate-900 dark:text-white">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Telefon</label>
+              <input v-model.trim="staffForm.phone" type="text" placeholder="+998901234567"
+                     class="w-full px-3 py-2 bg-slate-50 dark:bg-[#182235] border border-slate-200 dark:border-[#2c3b54] rounded-xl text-xs text-slate-900 dark:text-white">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Roli</label>
+            <select v-model="staffForm.role" class="w-full px-3 py-2 bg-slate-50 dark:bg-[#182235] border border-slate-200 dark:border-[#2c3b54] rounded-xl text-xs text-slate-900 dark:text-white">
+              <option value="STAFF">Xodim</option>
+              <option value="ADMIN">Administrator</option>
+              <option v-if="currentStaff.is_super_admin" value="SUPER_ADMIN">Bosh admin</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Biriktirilgan soha</label>
+            <select v-model="staffForm.assigned_category" class="w-full px-3 py-2 bg-slate-50 dark:bg-[#182235] border border-slate-200 dark:border-[#2c3b54] rounded-xl text-xs text-slate-900 dark:text-white">
+              <option :value="null">Barcha sohalar</option>
+              <option value="EDUCATION_QUALITY">Ta'lim sifati</option>
+              <option value="TEACHERS">O‘qituvchilar</option>
+              <option value="STUDENTS">O‘quvchilar</option>
+              <option value="INFRASTRUCTURE">Infratuzilma</option>
+              <option value="SUGGESTION">Takliflar</option>
+              <option value="COMPLAINT">Shikoyatlar</option>
+              <option value="OTHER">Boshqa</option>
+            </select>
+          </div>
+
+          <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-[#2c3b54]">
+            <button type="button" @click="staffModalOpen = false" class="px-3 py-1.5 text-xs text-slate-400 hover:text-white">Bekor qilish</button>
+            <button type="submit" class="px-4 py-1.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-medium transition">
+              Saqlash
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- =============================================================== -->
+    <!-- Toast Xabarnoma -->
+    <!-- =============================================================== -->
+    <transition enter-active-class="transition duration-300 ease-out transform"
+                enter-from-class="translate-y-4 opacity-0 scale-95"
+                enter-to-class="translate-y-0 opacity-100 scale-100"
+                leave-active-class="transition duration-200 ease-in transform"
+                leave-from-class="translate-y-0 opacity-100 scale-100"
+                leave-to-class="translate-y-4 opacity-0 scale-95">
+      <div v-if="toastMsg" class="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl text-xs font-semibold backdrop-blur-md border border-white/20"
+           :class="toastType === 'error' ? 'bg-rose-600/95 text-white shadow-rose-900/40' : 'bg-emerald-600/95 text-white shadow-emerald-900/40'">
+        <span class="text-base">{{ toastType === 'error' ? '⚠️' : '✅' }}</span>
+        <span>{{ toastMsg }}</span>
+      </div>
+    </transition>
+
+  </div>
+</div>
+
+<script>
+const { createApp, ref, reactive, computed, onMounted, nextTick } = Vue;
+
+createApp({
+  setup() {
+    // Rejim (Dark / Light)
+    const isDark = ref(
+      localStorage.getItem('murojaat_theme') === 'dark' ||
+      (!('murojaat_theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    );
+
+    function toggleTheme() {
+      isDark.value = !isDark.value;
+      document.documentElement.classList.toggle('dark', isDark.value);
+      localStorage.setItem('murojaat_theme', isDark.value ? 'dark' : 'light');
+      nextTick(renderCharts);
+    }
+
+    // Toast xabarnoma tizimi
+    const toastMsg = ref('');
+    const toastType = ref('success');
+    let toastTimer = null;
+    function showToast(msg, type = 'success') {
+      toastMsg.value = msg;
+      toastType.value = type;
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toastMsg.value = '';
+      }, 3500);
+    }
+
+    // Holatlar
+    const currentStaff = ref(null);
+    const authMethod = ref('password'); // 'password' yoki 'telegram'
+    const showPw = ref(false);
+    const showOtp = ref(false);
+    const pwForm = reactive({ login: '', password: '' });
+    const loginStep = ref(1);
+    const authLoading = ref(false);
+    const authError = ref('');
+    const loginForm = reactive({ telegram_id: '', code: '' });
+
+    const tab = ref('dashboard');
+    const tabTitles = {
+      dashboard: 'Dashboard va Statistika',
+      appeals: 'Barcha Murojaatlar',
+      staff: 'Xodimlar va Mas\'ullar',
+      users: 'Bot Foydalanuvchilari',
+      reports: 'Hisobotlar Eksporti',
+      settings: 'Tizim Sozlamalari',
+      audit: 'Audit Jurnali'
+    };
+
+    // Dashboard
+    const dashPeriod = ref('day');
+    const stats = ref(null);
+    let timelineChartInstance = null;
+    let categoriesChartInstance = null;
+
+    // Appeals
+    const appealsList = ref([]);
+    const totalAppeals = ref(0);
+    const appealPage = ref(1);
+    const totalAppealPages = ref(1);
+    const appealFilters = reactive({ q: '', status: '', category: '' });
+    const activeAppeal = ref(null);
+    const assignTargetStaffId = ref(null);
+    const statusChangeForm = reactive({ status: 'ACCEPTED', comment: '' });
+    const replyForm = reactive({ text: '' });
+    const infoRequestForm = reactive({ text: '' });
+
+    // Staff
+    const staffList = ref([]);
+    const staffModalOpen = ref(false);
+    const editingStaffId = ref(null);
+    const staffForm = reactive({ telegram_id: '', username: '', password: '', full_name: '', position: '', phone: '', role: 'STAFF', assigned_category: null });
+    const categoryLabels = {
+      EDUCATION_QUALITY: '📚 Ta\'lim sifati',
+      TEACHERS: '👨‍🏫 O‘qituvchilar',
+      STUDENTS: '🎒 O‘quvchilar',
+      INFRASTRUCTURE: '🏢 Infratuzilma',
+      SUGGESTION: '💡 Taklif',
+      COMPLAINT: '⚠️ Shikoyat',
+      OTHER: '📌 Boshqa'
+    };
+
+    // Profil va Parol sozlamalari
+    const profileModalOpen = ref(false);
+    const profileMsg = ref('');
+    const profileError = ref('');
+    const profileForm = reactive({ full_name: '', username: '', phone: '', password: '' });
+
+    function openProfileModal() {
+      if (!currentStaff.value) return;
+      profileMsg.value = '';
+      profileError.value = '';
+      profileForm.full_name = currentStaff.value.full_name || '';
+      profileForm.username = currentStaff.value.username || '';
+      profileForm.phone = currentStaff.value.phone || '';
+      profileForm.password = '';
+      profileModalOpen.value = true;
+    }
+
+    async function saveProfile() {
+      profileMsg.value = '';
+      profileError.value = '';
+      try {
+        const payload = {
+          full_name: profileForm.full_name,
+          username: profileForm.username || null,
+          phone: profileForm.phone || null
+        };
+        if (profileForm.password && profileForm.password.trim()) {
+          payload.password = profileForm.password.trim();
+        }
+        const res = await api('/api/auth/profile', {
+          method: 'PUT',
+          body: payload
+        });
+        currentStaff.value = res.staff;
+        profileMsg.value = "Profil va parolingiz muvaffaqiyatli saqlandi!";
+        profileForm.password = '';
+        setTimeout(() => { profileModalOpen.value = false; }, 1200);
+      } catch (e) {
+        profileError.value = e.message;
+      }
+    }
+
+    // Users
+    const usersList = ref([]);
+    const totalUsers = ref(0);
+    const userSearch = ref('');
+
+    // Reports
+    const reportFilters = reactive({ date_from: '', date_to: '' });
+    const excelReportUrl = computed(() => {
+      let q = '/api/reports/excel?';
+      if (reportFilters.date_from) q += '&date_from=' + reportFilters.date_from;
+      if (reportFilters.date_to) q += '&date_to=' + reportFilters.date_to;
+      return q;
+    });
+    const pdfReportUrl = computed(() => {
+      let q = '/api/reports/pdf?';
+      if (reportFilters.date_from) q += '&date_from=' + reportFilters.date_from;
+      if (reportFilters.date_to) q += '&date_to=' + reportFilters.date_to;
+      return q;
+    });
+
+    // Settings
+    const settingsForm = reactive({ about_text: '', contact_text: '', accepting_appeals: true });
+
+    // Audit
+    const auditList = ref([]);
+
+    // -------------------------------------------------------------
+    // API So'rovlar
+    // -------------------------------------------------------------
+    async function api(path, options = {}) {
+      options.headers = options.headers || {};
+      if (options.body && typeof options.body === 'object' && !(options.body instanceof FormData)) {
+        options.headers['Content-Type'] = 'application/json';
+        options.body = JSON.stringify(options.body);
+      }
+      const res = await fetch(path, options);
+      if (res.status === 401) {
+        currentStaff.value = null;
+        throw new Error('Sessiya muddati tugadi');
+      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.detail || 'Xatolik yuz berdi');
+      }
+      return data;
+    }
+
+    // -------------------------------------------------------------
+    // Autentifikatsiya
+    // -------------------------------------------------------------
+    async function loginWithPassword() {
+      authLoading.value = true;
+      authError.value = '';
+      try {
+        const res = await api('/api/auth/login-password', {
+          method: 'POST',
+          body: {
+            login: pwForm.login,
+            password: pwForm.password
+          }
+        });
+        currentStaff.value = res.staff;
+        onLoggedIn();
+      } catch (e) {
+        authError.value = e.message;
+      } finally {
+        authLoading.value = false;
+      }
+    }
+
+    async function checkAuth() {
+      try {
+        const staff = await api('/api/auth/me');
+        currentStaff.value = staff;
+        onLoggedIn();
+      } catch (e) {
+        currentStaff.value = null;
+      }
+    }
+
+    async function requestCode() {
+      authLoading.value = true;
+      authError.value = '';
+      try {
+        await api('/api/auth/request-code', {
+          method: 'POST',
+          body: { telegram_id: parseInt(loginForm.telegram_id) }
+        });
+        loginStep.value = 2;
+      } catch (e) {
+        authError.value = e.message;
+      } finally {
+        authLoading.value = false;
+      }
+    }
+
+    async function verifyCode() {
+      authLoading.value = true;
+      authError.value = '';
+      try {
+        const res = await api('/api/auth/login', {
+          method: 'POST',
+          body: {
+            telegram_id: parseInt(loginForm.telegram_id),
+            code: loginForm.code
+          }
+        });
+        currentStaff.value = res.staff;
+        onLoggedIn();
+      } catch (e) {
+        authError.value = e.message;
+      } finally {
+        authLoading.value = false;
+      }
+    }
+
+    async function logout() {
+      try {
+        await api('/api/auth/logout', { method: 'POST' });
+      } catch (e) {}
+      currentStaff.value = null;
+      loginStep.value = 1;
+      loginForm.code = '';
+    }
+
+    function onLoggedIn() {
+      loadDashboard();
+      if (currentStaff.value && currentStaff.value.is_admin) {
+        loadStaff();
+      }
+    }
+
+    // -------------------------------------------------------------
+    // Tablar
+    // -------------------------------------------------------------
+    function setTab(newTab) {
+      tab.value = newTab;
+      refreshCurrentTab();
+    }
+
+    function refreshCurrentTab() {
+      if (tab.value === 'dashboard') loadDashboard();
+      else if (tab.value === 'appeals') loadAppeals(1);
+      else if (tab.value === 'staff') loadStaff();
+      else if (tab.value === 'users') loadUsers(1);
+      else if (tab.value === 'settings') loadSettings();
+      else if (tab.value === 'audit') loadAudit();
+    }
+
+    // -------------------------------------------------------------
+    // Dashboard & Chart.js
+    // -------------------------------------------------------------
+    async function loadDashboard() {
+      try {
+        stats.value = await api(`/api/stats/dashboard?period=${dashPeriod.value}`);
+        nextTick(renderCharts);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function changePeriod(p) {
+      dashPeriod.value = p;
+      loadDashboard();
+    }
+
+    function renderCharts() {
+      if (!stats.value) return;
+
+      const dark = isDark.value;
+      const gridColor = dark ? 'rgba(44, 59, 84, 0.6)' : 'rgba(226, 232, 240, 0.8)';
+      const textColor = dark ? '#94a3b8' : '#64748b';
+
+      // Dinamika grafigi
+      const tCanvas = document.getElementById('timelineChart');
+      if (tCanvas) {
+        if (timelineChartInstance) timelineChartInstance.destroy();
+        const ts = stats.value.timeseries;
+        timelineChartInstance = new Chart(tCanvas, {
+          type: 'line',
+          data: {
+            labels: ts.labels,
+            datasets: [
+              {
+                label: 'Yangi murojaatlar',
+                data: ts.created,
+                borderColor: '#38bdf8',
+                backgroundColor: 'rgba(56, 189, 248, 0.15)',
+                fill: true,
+                tension: 0.35,
+                borderWidth: 2,
+                pointBackgroundColor: '#38bdf8',
+              },
+              {
+                label: 'Hal qilingan',
+                data: ts.resolved,
+                borderColor: '#22c55e',
+                backgroundColor: 'transparent',
+                tension: 0.35,
+                borderWidth: 2,
+                pointBackgroundColor: '#22c55e',
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: { color: textColor, font: { family: 'Inter', size: 11 } }
+              }
+            },
+            scales: {
+              x: {
+                grid: { color: gridColor },
+                ticks: { color: textColor, font: { family: 'Inter', size: 10 } }
+              },
+              y: {
+                beginAtZero: true,
+                grid: { color: gridColor },
+                ticks: { precision: 0, color: textColor, font: { family: 'Inter', size: 10 } }
+              }
+            }
+          }
+        });
+      }
+
+      // Yo'nalishlar grafigi
+      const cCanvas = document.getElementById('categoriesChart');
+      if (cCanvas) {
+        if (categoriesChartInstance) categoriesChartInstance.destroy();
+        const cats = stats.value.by_category;
+        const labels = Object.keys(cats).map(k => (stats.value.labels && stats.value.labels.category && stats.value.labels.category[k]) || k);
+        const data = Object.values(cats);
+        categoriesChartInstance = new Chart(cCanvas, {
+          type: 'doughnut',
+          data: {
+            labels: labels,
+            datasets: [{
+              data: data,
+              backgroundColor: ['#38bdf8', '#22c55e', '#f59e0b', '#a855f7', '#ec4899', '#ef4444', '#64748b'],
+              borderColor: dark ? '#1e293b' : '#ffffff',
+              borderWidth: 2,
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: { boxWidth: 10, color: textColor, font: { family: 'Inter', size: 10 } }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    // -------------------------------------------------------------
+    // Murojaatlar
+    // -------------------------------------------------------------
+    async function loadAppeals(page = 1) {
+      appealPage.value = page;
+      let url = `/api/appeals?page=${page}&page_size=20`;
+      if (appealFilters.q) url += `&q=${encodeURIComponent(appealFilters.q)}`;
+      if (appealFilters.status) url += `&status=${appealFilters.status}`;
+      if (appealFilters.category) url += `&category=${appealFilters.category}`;
+
+      try {
+        const res = await api(url);
+        appealsList.value = res.items;
+        totalAppeals.value = res.total;
+        totalAppealPages.value = res.total_pages;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function resetAppealFilters() {
+      appealFilters.q = '';
+      appealFilters.status = '';
+      appealFilters.category = '';
+      loadAppeals(1);
+    }
+
+    async function openAppealModal(id) {
+      try {
+        activeAppeal.value = await api(`/api/appeals/${id}`);
+        assignTargetStaffId.value = activeAppeal.value.assigned_staff ? activeAppeal.value.assigned_staff.id : null;
+        statusChangeForm.status = activeAppeal.value.status;
+        statusChangeForm.comment = '';
+        replyForm.text = '';
+        infoRequestForm.text = '';
+      } catch (e) {
+        alert(e.message);
+      }
+    }
+
+    async function assignStaff() {
+      if (!activeAppeal.value || !assignTargetStaffId.value) return;
+      try {
+        await api(`/api/appeals/${activeAppeal.value.id}/assign`, {
+          method: 'POST',
+          body: { staff_id: assignTargetStaffId.value }
+        });
+        openAppealModal(activeAppeal.value.id);
+        loadAppeals(appealPage.value);
+      } catch (e) {
+        alert(e.message);
+      }
+    }
+
+    async function submitStatusChange() {
+      if (!activeAppeal.value) return;
+      try {
+        await api(`/api/appeals/${activeAppeal.value.id}/status`, {
+          method: 'POST',
+          body: {
+            status: statusChangeForm.status,
+            comment: statusChangeForm.comment
+          }
+        });
+        openAppealModal(activeAppeal.value.id);
+        loadAppeals(appealPage.value);
+        loadDashboard();
+      } catch (e) {
+        alert(e.message);
+      }
+    }
+
+    async function submitReply() {
+      if (!activeAppeal.value || !replyForm.text.trim()) return;
+      try {
+        await api(`/api/appeals/${activeAppeal.value.id}/reply`, {
+          method: 'POST',
+          body: { text: replyForm.text }
+        });
+        replyForm.text = '';
+        openAppealModal(activeAppeal.value.id);
+      } catch (e) {
+        alert(e.message);
+      }
+    }
+
+    function statusBadgeClass(st) {
+      switch (st) {
+        case 'NEW': return 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300 border border-amber-300/30';
+        case 'ACCEPTED': return 'bg-sky-100 text-sky-800 dark:bg-sky-500/20 dark:text-sky-300 border border-sky-300/30';
+        case 'IN_REVIEW': return 'bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300 border border-blue-300/30';
+        case 'INFO_REQUESTED': return 'bg-purple-100 text-purple-800 dark:bg-purple-500/20 dark:text-purple-300 border border-purple-300/30';
+        case 'RESOLVED': return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300 border border-emerald-300/30';
+        case 'REJECTED': return 'bg-rose-100 text-rose-800 dark:bg-rose-500/20 dark:text-rose-300 border border-rose-300/30';
+        default: return 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300';
+      }
+    }
+
+    // -------------------------------------------------------------
+    // Xodimlar
+    // -------------------------------------------------------------
+    async function loadStaff() {
+      try {
+        staffList.value = await api('/api/staff');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function openAddStaffModal() {
+      editingStaffId.value = null;
+      staffForm.telegram_id = '';
+      staffForm.username = '';
+      staffForm.password = '';
+      staffForm.full_name = '';
+      staffForm.position = '';
+      staffForm.phone = '';
+      staffForm.role = 'STAFF';
+      staffForm.assigned_category = null;
+      staffModalOpen.value = true;
+    }
+
+    function openEditStaffModal(s) {
+      editingStaffId.value = s.id;
+      staffForm.telegram_id = s.telegram_id;
+      staffForm.username = s.username || '';
+      staffForm.password = '';
+      staffForm.full_name = s.full_name;
+      staffForm.position = s.position || '';
+      staffForm.phone = s.phone || '';
+      staffForm.role = s.role;
+      staffForm.assigned_category = s.assigned_category || null;
+      staffModalOpen.value = true;
+    }
+
+    async function saveStaffMember() {
+      try {
+        const payload = {
+          ...staffForm,
+          telegram_id: parseInt(staffForm.telegram_id, 10)
+        };
+        if (!payload.password) delete payload.password;
+        if (!payload.username) payload.username = null;
+        if (editingStaffId.value) {
+          await api(`/api/staff/${editingStaffId.value}`, {
+            method: 'PUT',
+            body: payload
+          });
+          showToast('Xodim ma\'lumotlari muvaffaqiyatli yangilandi');
+        } else {
+          await api('/api/staff', {
+            method: 'POST',
+            body: payload
+          });
+          showToast('Yangi mas\'ul xodim muvaffaqiyatli qo‘shildi');
+        }
+        staffModalOpen.value = false;
+        loadStaff();
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
+    }
+
+    async function quickUpdateStaffCategory(s) {
+      try {
+        await api(`/api/staff/${s.id}`, {
+          method: 'PUT',
+          body: { assigned_category: s.assigned_category }
+        });
+        const catName = categoryLabels[s.assigned_category] || 'Barcha sohalar';
+        showToast(`«${s.full_name}» xodimiga soha biriktirildi: ${catName}`);
+      } catch (e) {
+        showToast(e.message, 'error');
+        loadStaff();
+      }
+    }
+
+    async function toggleStaffActive(s) {
+      if (currentStaff.value && s.id === currentStaff.value.id) {
+        showToast("O‘z faoliyatingizni to‘xtata olmaysiz!", 'error');
+        return;
+      }
+      try {
+        await api(`/api/staff/${s.id}`, {
+          method: 'PUT',
+          body: { is_active: !s.is_active }
+        });
+        s.is_active = !s.is_active;
+        showToast(s.is_active ? `«${s.full_name}» faollashtirildi` : `«${s.full_name}» faoliyati to‘xtatildi`);
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
+    }
+
+    async function confirmDeleteStaff(s) {
+      const name = s.full_name || (s.username ? '@' + s.username : s.telegram_id);
+      if (!confirm(`Haqiqatan ham «${name}» xodimini tizimdan BUTUNLAY o‘chirmoqchimisiz?\n\nBu amal bekor qilinmaydi va xodimga biriktirilgan murojaatlar ochiq holatga o‘tadi.`)) {
+        return;
+      }
+      try {
+        await api(`/api/staff/${s.id}`, {
+          method: 'DELETE'
+        });
+        showToast(`«${name}» xodimi tizimdan butunlay o‘chirildi`);
+        loadStaff();
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
+    }
+
+    // -------------------------------------------------------------
+    // Foydalanuvchilar
+    // -------------------------------------------------------------
+    async function loadUsers(page = 1) {
+      let url = `/api/users?page=${page}`;
+      if (userSearch.value) url += `&q=${encodeURIComponent(userSearch.value)}`;
+      try {
+        const res = await api(url);
+        usersList.value = res.items;
+        totalUsers.value = res.total;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function toggleBlockUser(u) {
+      if (!confirm(`Foydalanuvchi (${u.full_name || u.telegram_id}) holatini o‘zgartirishni tasdiqlaysizmi?`)) return;
+      try {
+        await api(`/api/users/${u.id}/toggle-block`, {
+          method: 'POST',
+          body: { is_blocked: !u.is_blocked }
+        });
+        loadUsers();
+      } catch (e) {
+        alert(e.message);
+      }
+    }
+
+    // -------------------------------------------------------------
+    // Sozlamalar
+    // -------------------------------------------------------------
+    async function loadSettings() {
+      try {
+        const res = await api('/api/settings');
+        settingsForm.about_text = res.values.about_text || '';
+        settingsForm.contact_text = res.values.contact_text || '';
+        settingsForm.accepting_appeals = res.values.accepting_appeals === '1';
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function saveSettings() {
+      try {
+        await api('/api/settings', {
+          method: 'PUT',
+          body: {
+            about_text: settingsForm.about_text,
+            contact_text: settingsForm.contact_text,
+            accepting_appeals: settingsForm.accepting_appeals ? '1' : '0'
+          }
+        });
+        alert('Sozlamalar muvaffaqiyatli saqlandi');
+      } catch (e) {
+        alert(e.message);
+      }
+    }
+
+    // -------------------------------------------------------------
+    // Audit Jurnali
+    // -------------------------------------------------------------
+    async function loadAudit() {
+      try {
+        const res = await api('/api/audit');
+        auditList.value = res.items;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    onMounted(async () => {
+      document.documentElement.classList.toggle('dark', isDark.value);
+      // Magic Token (Telegram bot orqali 1-klikda kirish)
+      const urlParams = new URLSearchParams(window.location.search);
+      const magicToken = urlParams.get('magic_token');
+      if (magicToken) {
+        authLoading.value = true;
+        try {
+          const res = await api(`/api/auth/magic-login?token=${encodeURIComponent(magicToken)}`);
+          currentStaff.value = res.staff;
+          window.history.replaceState({}, document.title, window.location.pathname);
+          onLoggedIn();
+          return;
+        } catch (e) {
+          authError.value = e.message;
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } finally {
+          authLoading.value = false;
+        }
+      }
+      checkAuth();
+    });
+
+    return {
+      isDark, toggleTheme, toastMsg, toastType, showToast,
+      currentStaff, authMethod, showPw, showOtp, pwForm, loginWithPassword, loginStep, authLoading, authError, loginForm,
+      tab, tabTitles, setTab, refreshCurrentTab,
+      dashPeriod, stats, changePeriod,
+      appealsList, totalAppeals, appealPage, totalAppealPages, appealFilters,
+      loadAppeals, resetAppealFilters, activeAppeal, openAppealModal,
+      assignTargetStaffId, assignStaff, statusChangeForm, submitStatusChange,
+      replyForm, submitReply, infoRequestForm, statusBadgeClass,
+      staffList, staffModalOpen, editingStaffId, staffForm, categoryLabels, openAddStaffModal, openEditStaffModal, saveStaffMember,
+      quickUpdateStaffCategory, toggleStaffActive, confirmDeleteStaff,
+      profileModalOpen, profileMsg, profileError, profileForm, openProfileModal, saveProfile,
+      usersList, totalUsers, userSearch, loadUsers, toggleBlockUser,
+      reportFilters, excelReportUrl, pdfReportUrl,
+      settingsForm, saveSettings,
+      auditList,
+      requestCode, verifyCode, logout
+    };
+  }
+}).mount('#app');
+</script>
+</body>
+</html>
